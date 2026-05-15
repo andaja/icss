@@ -1,0 +1,49 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/icss",
+    "apps/showcase",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.85"
+
+[workspace.dependencies]
+icss = { path = "crates/icss" }
+
+# GUI
+iced = { version = "0.14", features = ["wgpu", "tokio", "svg", "image", "canvas", "advanced"] }
+iced_fonts = { version = "0.3", features = ["bootstrap"] }
+
+# Color science
+palette = "0.7"
+
+# Misc
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1", features = ["full"] }
+
+[workspace.lints.clippy]
+manual_div_ceil = "warn"
+unnecessary_map_or = "warn"
+collapsible_if = "warn"
+needless_range_loop = "warn"
+useless_conversion = "warn"
+unnecessary_cast = "warn"
+manual_is_multiple_of = "warn"
+redundant_field_names = "warn"
+needless_borrow = "warn"
+manual_abs_diff = "warn"
+too_many_arguments = "allow"
+type_complexity = "allow"
+module_inception = "allow"
+
+[workspace.lints.rust]
+unused_imports = "warn"
+unused_mut = "warn"
+dead_code = "allow"
+unused_variables = "warn"

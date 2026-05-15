@@ -1,0 +1,23 @@
+[package]
+name = "icss"
+description = "A CSS-like theme engine, generative design system, and widget library for iced."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+readme = "../../README.md"
+keywords = ["iced", "gui", "theme", "css", "design-system"]
+categories = ["gui"]
+
+[[bin]]
+name = "gen_tailwind"
+path = "src/bin/gen_tailwind.rs"
+
+[dependencies]
+iced = { workspace = true }
+palette = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[lints]
+workspace = true

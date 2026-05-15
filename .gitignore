@@ -1,0 +1,18 @@
+/target
+**/*.rs.bk
+*.swp
+*.swo
+
+# Showcase runtime output (generated themes + saved vars)
+showcase-vars.conf
+theme-dark.icss
+theme-light.icss
+
+# OS / editor / tooling cruft
+.DS_Store
+**/.DS_Store
+Thumbs.db
+.claude/
+
+# Large demo source recording (keep the gif, skip the raw .mov)
+docs/demomovie/showcase-app.mov

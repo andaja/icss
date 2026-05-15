@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ICSS — a CSS-like theme engine for iced</title>
+<style>
+  /* ───────── ICSS theme variables (mirrors a real .icss file) ───────── */
+  :root {
+    --primary: #0f3460;
+    --primary-light: #1a4a80;
+    --primary-dark: #0a2440;
+    --success: #16c79a;
+    --success-light: #1dd9ab;
+    --danger: #e94560;
+    --danger-light: #ff5a75;
+    --warning: #f5a623;
+
+    --text: #eaeaea;
+    --text-soft: #9aa0b0;
+    --text-muted: #6e7382;
+    --text-dim: #4d5160;
+
+    --surface-0: #14141f;
+    --surface-1: #1a1a2e;
+    --surface-2: #25254a;
+    --surface-3: #2a2a50;
+    --border: rgba(255,255,255,0.13);
+    --border-strong: rgba(255,255,255,0.22);
+
+    --space-50: 4px;
+    --space-75: 6px;
+    --space-100: 8px;
+    --space-150: 12px;
+    --space-200: 16px;
+    --space-300: 24px;
+    --space-400: 32px;
+    --radius-75: 6px;
+    --radius-100: 8px;
+    --radius-150: 10px;
+    --radius-200: 12px;
+
+    --font-md: 14px;
+    --font-sm: 12px;
+    --font-title: 18px;
+    --font-headline: 28px;
+  }
+
+  /* ───────── Page chrome ───────── */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--surface-0);
+    color: var(--text);
+    font: 400 var(--font-md)/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  }
+  body { padding: var(--space-400) clamp(16px, 4vw, 48px); }
+  header { max-width: 1100px; margin: 0 auto var(--space-400); }
+  main { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-300); }
+
+  h1 { font: 300 var(--font-headline)/1.2 inherit; margin: 0 0 var(--space-100); letter-spacing: -0.01em; }
+  h1 .accent { color: var(--success); }
+  header p { color: var(--text-soft); margin: 0; max-width: 70ch; }
+
+  /* ───────── ICSS section (".section" container) ───────── */
+  .section {
+    background: var(--surface-1);
+    border-radius: var(--radius-200);
+    padding: var(--space-300);
+    border: 1px solid var(--border);
+  }
+  .section-title { font: 600 var(--font-title)/1.2 inherit; margin: 0 0 var(--space-50); }
+  .section-sub   { color: var(--text-soft); margin: 0 0 var(--space-200); font-size: var(--font-sm); }
+  .section-body  { display: flex; flex-direction: column; gap: var(--space-200); }
+
+  .row     { display: flex; gap: var(--space-100); flex-wrap: wrap; align-items: center; }
+  .stack   { display: flex; flex-direction: column; gap: var(--space-100); }
+  .cluster { display: flex; gap: var(--space-50); flex-wrap: wrap; align-items: center; }
+
+  /* ───────── ".button" ───────── */
+  .btn {
+    border: 0; cursor: pointer; font: inherit;
+    color: #fff;
+    padding: var(--space-100) var(--space-200);
+    border-radius: var(--radius-100);
+    transition: background-color 120ms ease, box-shadow 120ms ease, transform 80ms ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary   { background: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+  .btn.primary:hover { background: var(--primary-light); }
+  .btn.success   { background: var(--success); color: #052b22; }
+  .btn.success:hover { background: var(--success-light); }
+  .btn.danger    { background: var(--danger); }
+  .btn.danger:hover  { background: var(--danger-light); }
+  .btn.warning   { background: var(--warning); color: #3a2400; }
+  .btn.default   { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
+  .btn.default:hover { background: rgba(255,255,255,0.06); }
+  .btn.ghost     { background: transparent; color: var(--text); }
+  .btn.ghost:hover   { background: rgba(255,255,255,0.06); }
+  .btn.small     { border-radius: var(--radius-75); padding: var(--space-75) var(--space-150); font-size: var(--font-sm); }
+  .btn.tiny      { border-radius: 4px; padding: 3px var(--space-100); font-size: 11px; }
+  .btn.pill      { border-radius: 9999px; }
+  .btn.round     { border-radius: 9999px; width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+  .btn:disabled  { background: #2a2c3a; color: rgba(255,255,255,0.4); cursor: not-allowed; box-shadow: none; }
+
+  /* ───────── ".input", ".checkbox", ".toggle", ".radio" ───────── */
+  .input {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-100);
+    padding: var(--space-100) var(--space-150);
+    font: inherit;
+    width: 100%;
+    outline: none;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+  .input::placeholder { color: var(--text-muted); }
+  .input:focus  { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(26,74,128,0.35); }
+  .input.error  { border-color: var(--danger); }
+  .input.sz-sm  { padding: var(--space-75) var(--space-100); font-size: var(--font-sm); }
+  .input.sz-xs  { padding: 3px var(--space-100); font-size: 11px; }
+
+  .check, .radio-w { display: inline-flex; align-items: center; gap: var(--space-100); cursor: pointer; user-select: none; }
+  .check input, .radio-w input { appearance: none; -webkit-appearance: none; margin: 0; }
+  .check .box {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--surface-2);
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background-color 120ms ease, border-color 120ms ease;
+  }
+  .check input:checked + .box { background: var(--primary); border-color: var(--primary-light); }
+  .check input:checked + .box::after {
+    content: ""; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-1px,-1px);
+  }
+  .radio-w .dot {
+    width: 16px; height: 16px; border-radius: 9999px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--surface-2);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .radio-w input:checked + .dot { border-color: var(--primary-light); }
+  .radio-w input:checked + .dot::after { content: ""; width: 8px; height: 8px; border-radius: 9999px; background: var(--primary); }
+
+  .toggle { display: inline-flex; align-items: center; gap: var(--space-100); cursor: pointer; user-select: none; }
+  .toggle input { appearance: none; -webkit-appearance: none; margin: 0; }
+  .toggle .track {
+    width: 38px; height: 22px; border-radius: 9999px;
+    background: var(--surface-3); border: 1px solid var(--border);
+    position: relative; transition: background-color 120ms ease;
+  }
+  .toggle .track::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 16px; height: 16px; border-radius: 9999px; background: #c9ccd9;
+    transition: transform 140ms ease, background-color 140ms ease;
+  }
+  .toggle input:checked + .track { background: var(--primary); }
+  .toggle input:checked + .track::after { transform: translateX(16px); background: #fff; }
+
+  /* ───────── ".progress", ".slider", ".select", ".divider" ───────── */
+  .progress { width: 100%; height: 8px; background: var(--surface-2); border-radius: 9999px; overflow: hidden; }
+  .progress > i { display: block; height: 100%; background: var(--primary); }
+  .progress.success > i { background: var(--success); }
+  .progress.danger  > i { background: var(--danger); }
+  .progress.warning > i { background: var(--warning); }
+
+  .slider { width: 100%; appearance: none; -webkit-appearance: none; height: 4px; background: var(--surface-3); border-radius: 9999px; outline: none; }
+  .slider::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; border-radius: 9999px; background: var(--primary-light); cursor: pointer; }
+
+  .select {
+    background: var(--surface-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius-100);
+    padding: var(--space-100) var(--space-150); font: inherit;
+  }
+
+  .divider { height: 1px; background: var(--border); border: 0; margin: var(--space-100) 0; }
+
+  /* ───────── Typography helpers ───────── */
+  .title-medium   { font: 600 var(--font-title)/1.2 inherit; }
+  .title-small    { font: 600 15px/1.2 inherit; }
+  .body-small     { font-size: var(--font-sm); }
+  .text-soft      { color: var(--text-soft); }
+  .text-muted     { color: var(--text-muted); }
+  .text-danger    { color: var(--danger); }
+  .text-success   { color: var(--success); }
+  .caption        { font-size: 11px; color: var(--text-soft); letter-spacing: 0.02em; }
+
+  /* ───────── Code + side-by-side layout ───────── */
+  .demo {
+    display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-300);
+    align-items: start;
+  }
+  @media (max-width: 900px) { .demo { grid-template-columns: 1fr; } }
+  .preview { padding: var(--space-200); background: var(--surface-0); border-radius: var(--radius-150); border: 1px dashed var(--border); }
+  pre.code {
+    margin: 0;
+    background: #0c0d18;
+    color: #d6dae7;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-150);
+    padding: var(--space-200);
+    font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+    overflow-x: auto;
+    tab-size: 4;
+  }
+  pre.code .k { color: #c792ea; }
+  pre.code .s { color: #c3e88d; }
+  pre.code .c { color: #6e7382; font-style: italic; }
+  pre.code .n { color: #82aaff; }
+  pre.code .v { color: #ffcb6b; }
+  pre.code .p { color: #d6dae7; }
+
+  .lang-tag { display: inline-block; font: 11px ui-monospace, Menlo, monospace; color: var(--text-muted); margin-bottom: var(--space-75); letter-spacing: 0.05em; }
+
+  /* tabular demo */
+  table.demo-table { width: 100%; border-collapse: collapse; font-size: var(--font-sm); }
+  table.demo-table th, table.demo-table td { padding: var(--space-100) var(--space-150); text-align: left; }
+  table.demo-table thead { color: var(--text-soft); border-bottom: 1px solid var(--border); }
+  table.demo-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+  table.demo-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+  .pill-badge { display: inline-block; padding: 2px var(--space-100); border-radius: 9999px; font-size: 11px; }
+  .pill-badge.ok  { background: rgba(22,199,154,0.18); color: var(--success); }
+  .pill-badge.err { background: rgba(233,69,96,0.18); color: var(--danger); }
+  .pill-badge.warn{ background: rgba(245,166,35,0.18); color: var(--warning); }
+
+  footer { max-width: 1100px; margin: var(--space-400) auto 0; color: var(--text-muted); font-size: var(--font-sm); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ICSS <span class="accent">→</span> a CSS-like theme engine for <code>iced</code></h1>
+  <p>Style Rust desktop apps with class lists, variables, and pseudo-states. The HTML below is a visual mockup of how the corresponding iced widgets render at runtime — same theme tokens, same class names.</p>
+</header>
+
+<main>
+
+  <!-- ═══════════ BUTTONS ═══════════ -->
+  <section class="section">
+    <h2 class="section-title">Buttons</h2>
+    <p class="section-sub">Variants compose with size modifiers. Hover, active, and disabled states resolve from iced <code>Status</code>.</p>
+
+    <div class="demo">
+      <div class="preview">
+        <div class="stack">
+          <div class="row">
+            <button class="btn primary">Primary</button>
+            <button class="btn success">Success</button>
+            <button class="btn danger">Danger</button>
+            <button class="btn warning">Warning</button>
+            <button class="btn default">Default</button>
+            <button class="btn ghost">Ghost</button>
+          </div>
+          <div class="row">
+            <button class="btn primary small">Small</button>
+            <button class="btn primary tiny">Tiny</button>
+            <button class="btn primary pill">Pill button</button>
+            <button class="btn primary round" title="round">+</button>
+            <button class="btn primary" disabled>Disabled</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span class="lang-tag">RUST · iced</span>
+<pre class="code"><span class="k">let</span> t = &amp;state.theme;
+
+button(text(<span class="s">"Save"</span>))   .style(t.button(&amp;[<span class="s">"button"</span>, <span class="s">"primary"</span>]));
+button(text(<span class="s">"Delete"</span>)) .style(t.button(&amp;[<span class="s">"button"</span>, <span class="s">"danger"</span>]));
+button(text(<span class="s">"More…"</span>))  .style(t.button(&amp;[<span class="s">"button"</span>, <span class="s">"default"</span>, <span class="s">"small"</span>]));
+button(text(<span class="s">"+"</span>))      .style(t.button(&amp;[<span class="s">"button"</span>, <span class="s">"primary"</span>, <span class="s">"round"</span>]));</pre>
+
+        <span class="lang-tag" style="margin-top:12px">ICSS · theme.icss</span>
+<pre class="code"><span class="n">.button</span> <span class="p">{</span> color: #fff; border-radius: <span class="v">8px</span>; padding: <span class="v">8px 16px</span>; <span class="p">}</span>
+<span class="n">.primary</span>          <span class="p">{</span> background-color: var(--primary); <span class="p">}</span>
+<span class="n">.primary:hover</span>    <span class="p">{</span> background-color: var(--primary-light); <span class="p">}</span>
+<span class="n">.primary:disabled</span> <span class="p">{</span> background-color: #333; color: rgba(255,255,255,0.4); <span class="p">}</span>
+<span class="n">.button.primary</span>   <span class="p">{</span> box-shadow: 0 2px 8px rgba(0,0,0,0.25); <span class="p">}</span>
+<span class="n">.small</span>            <span class="p">{</span> border-radius: <span class="v">6px</span>; padding: <span class="v">4px 10px</span>; <span class="p">}</span>
+<span class="n">.round</span>            <span class="p">{</span> border-radius: <span class="v">9999px</span>; <span class="p">}</span></pre>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════ INPUTS / CHECKBOX / TOGGLE / RADIO ═══════════ -->
+  <section class="section">
+    <h2 class="section-title">Form controls</h2>
+    <p class="section-sub">Inputs, checkboxes, togglers, and radios share the <code>sz-md</code> / <code>sz-sm</code> / <code>sz-xs</code> sizing tokens so font, padding, and gap stay in lockstep.</p>
+
+    <div class="demo">
+      <div class="preview">
+        <div class="stack" style="gap:var(--space-200)">
+          <div class="stack">
+            <span class="title-small">Sign in</span>
+            <input class="input" placeholder="Email" value="alex@example.com" />
+            <input class="input" type="password" placeholder="Password" value="••••••••" />
+            <input class="input error" placeholder="Workspace name" value="" />
+            <span class="caption text-danger">This field is required</span>
+          </div>
+
+          <div class="row" style="gap:var(--space-300)">
+            <label class="check">
+              <input type="checkbox" checked />
+              <span class="box"></span>
+              <span>Accept terms</span>
+            </label>
+            <label class="toggle">
+              <input type="checkbox" checked />
+              <span class="track"></span>
+              <span>Enable telemetry</span>
+            </label>
+            <label class="radio-w">
+              <input type="radio" name="r" checked />
+              <span class="dot"></span>
+              <span>Auto</span>
+            </label>
+            <label class="radio-w">
+              <input type="radio" name="r" />
+              <span class="dot"></span>
+              <span>Manual</span>
+            </label>
+          </div>
+
+          <div class="row">
+            <select class="select">
+              <option>English</option><option>Français</option><option>Deutsch</option>
+            </select>
+            <input class="slider" type="range" value="60" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span class="lang-tag">RUST · iced</span>
+<pre class="code"><span class="k">let</span> md = t.sizing(&amp;[<span class="s">"sz-md"</span>]);   <span class="c">// font, padding, gap</span>
+
+text_input(<span class="s">"Email"</span>, &amp;state.email)
+    .size(md.font_size).padding(md.padding())
+    .on_input(Msg::Email)
+    .style(t.text_input(&amp;[<span class="s">"input"</span>, <span class="s">"sz-md"</span>]));
+
+checkbox(state.accept).label(<span class="s">"Accept terms"</span>)
+    .size(md.font_size).text_size(md.font_size).spacing(md.gap)
+    .on_toggle(Msg::Accept)
+    .style(t.checkbox(&amp;[<span class="s">"checkbox"</span>, <span class="s">"sz-md"</span>]));
+
+toggler(state.telemetry).label(<span class="s">"Enable telemetry"</span>)
+    .on_toggle(Msg::Telemetry)
+    .style(t.toggler(&amp;[<span class="s">"toggle"</span>]));</pre>
+
+        <span class="lang-tag" style="margin-top:12px">ICSS · theme.icss</span>
+<pre class="code"><span class="n">.input</span> <span class="p">{</span>
+    background-color: var(--surface-raised);
+    border: <span class="v">1px solid</span> var(--border);
+    border-radius: <span class="v">8px</span>;
+    color: var(--text);
+<span class="p">}</span>
+<span class="n">.input:focus</span> <span class="p">{</span> border-color: var(--primary-light); <span class="p">}</span>
+<span class="n">.input.error</span> <span class="p">{</span> border-color: var(--danger); <span class="p">}</span>
+
+<span class="n">.checkbox:checked</span> <span class="p">{</span> accent-color: var(--primary); <span class="p">}</span>
+<span class="n">.toggle:checked</span>   <span class="p">{</span> background-color: var(--primary); <span class="p">}</span></pre>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════ PROGRESS / TYPOGRAPHY ═══════════ -->
+  <section class="section">
+    <h2 class="section-title">Progress &amp; typography</h2>
+    <p class="section-sub">Same progress widget, three semantic classes. Text classes set size, weight, and color in one call.</p>
+
+    <div class="demo">
+      <div class="preview">
+        <div class="stack" style="gap:var(--space-200)">
+          <div class="stack">
+            <span class="caption text-soft">UPLOADING</span>
+            <div class="progress"><i style="width:64%"></i></div>
+          </div>
+          <div class="stack">
+            <span class="caption text-soft">COMPLETE</span>
+            <div class="progress success"><i style="width:100%"></i></div>
+          </div>
+          <div class="stack">
+            <span class="caption text-soft">FAILED</span>
+            <div class="progress danger"><i style="width:42%"></i></div>
+          </div>
+
+          <hr class="divider" />
+
+          <div class="stack">
+            <span class="title-medium">Settings</span>
+            <span class="body-small text-soft">Configure your account preferences and notification rules.</span>
+            <span class="body-small text-danger">Last sync failed — retry?</span>
+            <span class="caption">v0.40.21 · build 482</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span class="lang-tag">RUST · iced</span>
+<pre class="code">progress_bar(<span class="v">0.0</span>..=<span class="v">1.0</span>, <span class="v">0.64</span>)
+    .style(t.progress_bar(&amp;[<span class="s">"progress"</span>]));
+progress_bar(<span class="v">0.0</span>..=<span class="v">1.0</span>, <span class="v">1.0</span>)
+    .style(t.progress_bar(&amp;[<span class="s">"progress"</span>, <span class="s">"success"</span>]));
+progress_bar(<span class="v">0.0</span>..=<span class="v">1.0</span>, <span class="v">0.42</span>)
+    .style(t.progress_bar(&amp;[<span class="s">"progress"</span>, <span class="s">"danger"</span>]));
+
+t.text(<span class="s">"Settings"</span>,      &amp;[<span class="s">"title-medium"</span>]);
+t.text(<span class="s">"Configure…"</span>,    &amp;[<span class="s">"body-small"</span>, <span class="s">"text-soft"</span>]);
+t.text(<span class="s">"Last sync failed"</span>, &amp;[<span class="s">"body-small"</span>, <span class="s">"text-danger"</span>]);
+t.text(<span class="s">"v0.40.21 · build 482"</span>, &amp;[<span class="s">"caption"</span>]);</pre>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════ A DATATABLE (one of the custom widgets) ═══════════ -->
+  <section class="section">
+    <h2 class="section-title">DataTable (from <code>icss-widgets</code>)</h2>
+    <p class="section-sub">A small set of iced widgets that don't ship in core, styled entirely through ICSS.</p>
+
+    <div class="demo">
+      <div class="preview">
+        <table class="demo-table">
+          <thead><tr><th>Host</th><th>Status</th><th>Latency</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>alex-mbp</td>   <td><span class="pill-badge ok">online</span></td>  <td>14 ms</td><td><button class="btn primary small">Connect</button></td></tr>
+            <tr><td>workstation-7</td><td><span class="pill-badge ok">online</span></td><td>22 ms</td><td><button class="btn primary small">Connect</button></td></tr>
+            <tr><td>nas-rack</td>   <td><span class="pill-badge warn">idle</span></td>  <td>—</td>    <td><button class="btn default small">Wake</button></td></tr>
+            <tr><td>old-laptop</td> <td><span class="pill-badge err">offline</span></td><td>—</td>    <td><button class="btn ghost small">Forget</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <span class="lang-tag">RUST · iced</span>
+<pre class="code"><span class="k">use</span> icss_widgets::DataTable;
+
+<span class="k">let</span> table = DataTable::new(&amp;state.hosts)
+    .column(<span class="s">"Host"</span>,    |h| t.text(&amp;h.name, &amp;[<span class="s">"body-small"</span>]))
+    .column(<span class="s">"Status"</span>,  |h| status_badge(t, h.status))
+    .column(<span class="s">"Latency"</span>, |h| t.text(&amp;h.ping, &amp;[<span class="s">"body-small"</span>, <span class="s">"text-soft"</span>]))
+    .sortable(<span class="k">true</span>).page_size(<span class="v">20</span>);
+
+table.view(t)   <span class="c">// theme-aware — no inline styling needed</span></pre>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════ COMPLETE FORM EXAMPLE ═══════════ -->
+  <section class="section">
+    <h2 class="section-title">Putting it together</h2>
+    <p class="section-sub">A complete sign-in panel — no inline colors, no hand-rolled style closures.</p>
+
+    <div class="demo">
+      <div class="preview">
+        <div class="section" style="background:var(--surface-2); border:1px solid var(--border);">
+          <div class="stack" style="gap:var(--space-200)">
+            <span class="title-medium">Sign in</span>
+            <input class="input" placeholder="Email" />
+            <input class="input" type="password" placeholder="Password" />
+            <label class="check">
+              <input type="checkbox" />
+              <span class="box"></span>
+              <span>Remember me</span>
+            </label>
+            <div class="row" style="justify-content:flex-end">
+              <button class="btn default">Cancel</button>
+              <button class="btn primary">Sign in</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span class="lang-tag">RUST · iced</span>
+<pre class="code">t.frame(
+    t.column(&amp;[<span class="s">"subsection"</span>])
+        .push(t.text(<span class="s">"Sign in"</span>, &amp;[<span class="s">"title-medium"</span>]))
+        .push(email_input(t, &amp;state.email))
+        .push(password_input(t, &amp;state.password))
+        .push(remember_checkbox(t, state.remember))
+        .push(
+            t.row(&amp;[<span class="s">"row"</span>])
+                .push(button(text(<span class="s">"Cancel"</span>)).style(t.button(&amp;[<span class="s">"button"</span>, <span class="s">"default"</span>])))
+                .push(button(text(<span class="s">"Sign in"</span>)).style(t.button(&amp;[<span class="s">"button"</span>, <span class="s">"primary"</span>])))
+        ),
+    &amp;[<span class="s">"section"</span>, <span class="s">"section-body"</span>],
+)</pre>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Mockup rendered in HTML for preview purposes — the real widgets run natively in iced + wgpu via the ICSS theme engine.
+  See <code>README.md</code> in this folder for the prose pitch, and <code>docs/COMPONENT-CATALOG.md</code> for the full class reference.
+</footer>
+
+</body>
+</html>
