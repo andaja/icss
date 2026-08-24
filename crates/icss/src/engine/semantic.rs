@@ -135,7 +135,12 @@ impl SurfaceFamily {
     /// Called after a text override, because the outline direction follows the
     /// text ladder that ends up on the family rather than the one `resolve`
     /// first computed.
-    fn with_outlines(mut self, palette: &TonalPalette, base: usize, needs_light_text: bool) -> Self {
+    fn with_outlines(
+        mut self,
+        palette: &TonalPalette,
+        base: usize,
+        needs_light_text: bool,
+    ) -> Self {
         self.outlines = Outlines::resolve(palette, base, needs_light_text);
         self
     }

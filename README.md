@@ -1,9 +1,14 @@
 # ICSS
 
+[![crates.io](https://img.shields.io/crates/v/icss.svg)](https://crates.io/crates/icss)
+[![docs.rs](https://img.shields.io/docsrs/icss)](https://docs.rs/icss)
+[![CI](https://github.com/andaja/icss/actions/workflows/ci.yml/badge.svg)](https://github.com/andaja/icss/actions/workflows/ci.yml)
+[![license](https://img.shields.io/crates/l/icss.svg)](https://github.com/andaja/icss/blob/main/LICENSE)
+
 A CSS-like theme engine, generative design system, and widget library for the
 [iced](https://github.com/iced-rs/iced) GUI framework. Targets iced 0.14.
 
-![ICSS showcase app](docs/demomovie/showcase-app.gif)
+![ICSS showcase app](https://raw.githubusercontent.com/andaja/icss/main/docs/demomovie/showcase-app.gif)
 
 *The showcase app: a live gallery of every widget and an interactive theme
 editor, driven by the engine.*
@@ -17,7 +22,7 @@ let theme = icss::Theme::load(include_str!("theme.icss"))?;
 button("Connect").style(theme.button(&["button", "primary"]));
 ```
 
-> **See it rendered:** [`docs/preview.html`](docs/preview.html) is a
+> **See it rendered:** [`docs/preview.html`](https://github.com/andaja/icss/blob/main/docs/preview.html) is a
 > single-file visual mockup. Open it in any browser to see the widgets
 > styled by ICSS alongside the Rust + `.icss` source that produces them.
 
@@ -209,7 +214,7 @@ No style closures and no inline magic numbers left in the view code.
 | Row / Column | `t.row(&[…])`, `t.column(&[…])` | `row`, `row-tight`, `row-loose`, `stack`, `stack-tight`, `stack-loose`, `cluster` |
 
 The full catalog with every class, modifier, and pseudo-state is in
-[`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md).
+[`docs/COMPONENT-CATALOG.md`](https://github.com/andaja/icss/blob/main/docs/COMPONENT-CATALOG.md).
 
 ## Generative themes
 
@@ -241,18 +246,18 @@ tab bar controls whether edits are written to disk.
 
 ## Documentation
 
-- [`docs/preview.html`](docs/preview.html): visual mockup of the rendered widgets (open in a browser)
-- [`docs/ICSS.md`](docs/ICSS.md): `.icss` syntax specification
-- [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md): full class reference
-- [`docs/theme-creation.md`](docs/theme-creation.md): design-system architecture
-- [`docs/SHOWCASE.md`](docs/SHOWCASE.md): showcase app architecture
+- [`docs/preview.html`](https://github.com/andaja/icss/blob/main/docs/preview.html): visual mockup of the rendered widgets (open in a browser)
+- [`docs/ICSS.md`](https://github.com/andaja/icss/blob/main/docs/ICSS.md): `.icss` syntax specification
+- [`docs/COMPONENT-CATALOG.md`](https://github.com/andaja/icss/blob/main/docs/COMPONENT-CATALOG.md): full class reference
+- [`docs/theme-creation.md`](https://github.com/andaja/icss/blob/main/docs/theme-creation.md): design-system architecture
+- [`docs/SHOWCASE.md`](https://github.com/andaja/icss/blob/main/docs/SHOWCASE.md): showcase app architecture
 
 ## Toolchain
 
 - iced 0.14 (wgpu backend)
-- Rust edition 2024, MSRV 1.85
+- Rust edition 2024, MSRV 1.88
 - Pure parser and style resolver. No browser engine or JS runtime.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/andaja/icss/blob/main/LICENSE).

@@ -3884,20 +3884,19 @@ fn primitives_page(state: &State) -> Element<'_, Msg> {
         .weighted(iced::font::Weight::Semibold);
 
     // Helper: labeled row of swatches (no step numbers)
-    let color_group = |label: &str,
-                       items: Vec<(&'static str, &'static [&'static str])>|
-     -> Element<'_, Msg> {
-        let swatches: Vec<Element<'_, Msg>> = items
-            .into_iter()
-            .map(|(name, cls)| prim_swatch(t, d, name, cls))
-            .collect();
-        column![
-            text(label.to_owned()).size(d.font_label_small),
-            Row::with_children(swatches).spacing(d.space_25),
-        ]
-        .spacing(2)
-        .into()
-    };
+    let color_group =
+        |label: &str, items: Vec<(&'static str, &'static [&'static str])>| -> Element<'_, Msg> {
+            let swatches: Vec<Element<'_, Msg>> = items
+                .into_iter()
+                .map(|(name, cls)| prim_swatch(t, d, name, cls))
+                .collect();
+            column![
+                text(label.to_owned()).size(d.font_label_small),
+                Row::with_children(swatches).spacing(d.space_25),
+            ]
+            .spacing(2)
+            .into()
+        };
 
     // Helper: labeled row of swatches with step numbers
     let color_group_steps = |label: &str,

@@ -165,7 +165,7 @@ mod tests {
         let s = to_oklch(&signals.success);
         let h: f32 = s.hue.into_inner();
         assert!(
-            h >= 135.0 && h <= 175.0,
+            (135.0..=175.0).contains(&h),
             "success hue {h} not in green range"
         );
 
@@ -179,7 +179,7 @@ mod tests {
         let h: f32 = w.hue.into_inner();
         // Allow some drift from gamut clamping roundtrip.
         assert!(
-            h >= 45.0 && h <= 110.0,
+            (45.0..=110.0).contains(&h),
             "warning hue {h} not in yellow range"
         );
     }
@@ -190,7 +190,7 @@ mod tests {
         let s = to_oklch(&signals.success);
         let h: f32 = s.hue.into_inner();
         assert!(
-            h >= 135.0 && h <= 175.0,
+            (135.0..=175.0).contains(&h),
             "success hue {h} should stay green"
         );
     }

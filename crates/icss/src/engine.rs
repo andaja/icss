@@ -250,8 +250,10 @@ mod tests {
 
     #[test]
     fn light_and_dark_differ() {
-        let mut inputs = ThemeInputs::default();
-        inputs.dark_mode = true;
+        let mut inputs = ThemeInputs {
+            dark_mode: true,
+            ..Default::default()
+        };
         let dark = generate(&inputs);
         inputs.dark_mode = false;
         let light = generate(&inputs);
@@ -260,8 +262,10 @@ mod tests {
 
     #[test]
     fn different_increments_change_radii() {
-        let mut inputs = ThemeInputs::default();
-        inputs.increment = 8.0;
+        let mut inputs = ThemeInputs {
+            increment: 8.0,
+            ..Default::default()
+        };
         let a = generate(&inputs);
         inputs.increment = 13.0;
         let b = generate(&inputs);

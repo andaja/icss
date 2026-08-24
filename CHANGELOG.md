@@ -1,6 +1,18 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.1
+
+Packaging and metadata fixes. No library code changes.
+
+- README images and doc links are now absolute URLs. Relative paths were
+  resolved against the package directory on crates.io, so the showcase gif
+  and every `docs/` link 404ed on the crate page.
+- `rust-version` corrected to 1.88. The declared 1.85 was never buildable:
+  iced 0.14 and wgpu 27 both require 1.88.
+- Added CI (build/test on Linux, macOS, Windows; fmt, clippy, MSRV check).
+- Cleared all clippy warnings and applied rustfmt.
+
+## 0.1.0
 
 First public release.
 
