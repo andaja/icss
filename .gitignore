@@ -16,3 +16,7 @@ Thumbs.db
 
 # Large demo source recording (keep the gif, skip the raw .mov)
 docs/demomovie/showcase-app.mov
+
+# Local secrets (crates.io token, etc.)
+.env
+.env.*
