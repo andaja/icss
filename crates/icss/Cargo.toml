@@ -1,10 +1,12 @@
 [package]
 name = "icss"
-description = "A CSS-like theme engine, generative design system, and widget library for iced."
+description = "A CSS-like theme engine, generative design system, and widget library for iced 0.14."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+repository = "https://github.com/andaja/icss"
+documentation = "https://docs.rs/icss"
 readme = "../../README.md"
 keywords = ["iced", "gui", "theme", "css", "design-system"]
 categories = ["gui"]

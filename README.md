@@ -1,11 +1,16 @@
 # ICSS
 
 A CSS-like theme engine, generative design system, and widget library for the
-[iced](https://github.com/iced-rs/iced) GUI framework.
+[iced](https://github.com/iced-rs/iced) GUI framework. Targets iced 0.14.
 
-ICSS lets you style a Rust desktop app the way you'd style a web app — write a
+![ICSS showcase app](docs/demomovie/showcase-app.gif)
+
+*The showcase app: a live gallery of every widget and an interactive theme
+editor, driven by the engine.*
+
+ICSS lets you style a Rust desktop app the way you'd style a web app: write a
 `.icss` file with classes, variables, and pseudo-states, then attach class
-lists to your widgets:
+lists to your widgets.
 
 ```rust
 let theme = icss::Theme::load(include_str!("theme.icss"))?;
@@ -13,9 +18,8 @@ button("Connect").style(theme.button(&["button", "primary"]));
 ```
 
 > **See it rendered:** [`docs/preview.html`](docs/preview.html) is a
-> single-file visual mockup — open it in any browser to see the widgets
+> single-file visual mockup. Open it in any browser to see the widgets
 > styled by ICSS alongside the Rust + `.icss` source that produces them.
-
 
 
 ## Why
@@ -24,11 +28,11 @@ iced's native styling API is closure-based: every widget takes a
 `Fn(&Theme, Status) -> Style`. That works, but in a real app you end up:
 
 - repeating the same style closures across files
-- hardcoding colors and radii inline
+- hardcoding colours and radii inline
 - forking the closure for every variant (primary/danger/small/disabled…)
 
-ICSS replaces that with the model people already know from the web — class
-lists, variables, pseudo-states — without bringing in a browser. Themes are
+ICSS replaces that with the model people already know from the web (class
+lists, variables, pseudo-states) without bringing in a browser. Themes are
 plain text files that can be hot-reloaded.
 
 ## Layout
@@ -37,16 +41,16 @@ This is a Cargo workspace with one library crate and one showcase app.
 
 | Path | Crate | Description |
 |------|-------|-------------|
-| `crates/icss` | `icss` | The library — three modules below |
+| `crates/icss` | `icss` | The library, three modules below |
 | `apps/showcase` | `icss-showcase` | Live component gallery + interactive theme editor |
 
 The `icss` crate has three modules:
 
-- **`icss::theme`** — parses `.icss` and resolves widget styles for iced.
-- **`icss::engine`** — generative design system: produces a complete `.icss`
+- **`icss::theme`**: parses `.icss` and resolves widget styles for iced.
+- **`icss::engine`**: generative design system. Produces a complete `.icss`
   theme from a handful of base variables (OKLCH tonal palettes, dimensional
   tokens, semantic light/dark mapping).
-- **`icss::widgets`** — theme-aware iced widgets that don't ship in core:
+- **`icss::widgets`**: theme-aware iced widgets that don't ship in core:
   `DataTable`, `TileGrid`, `ButtonGroup`, `ControlGroup`, `IconInput`,
   `StickySection`, and a tabbed `TabBar`.
 
@@ -184,8 +188,7 @@ fn view(state: &State) -> Element<Msg> {
 }
 ```
 
-That's it — no per-widget closures, no inline colors, no padding magic
-numbers.
+No style closures and no inline magic numbers left in the view code.
 
 ## Component catalog (excerpt)
 
@@ -213,9 +216,9 @@ The full catalog with every class, modifier, and pseudo-state is in
 If you don't want to hand-author a `.icss` file, `icss::engine` will produce
 one from a small set of base variables:
 
-- a brand hue + a few accents (success/danger/warning) — expanded into OKLCH
+- a brand hue + a few accents (success/danger/warning), expanded into OKLCH
   tonal palettes
-- one dimensional scale (`--space-100`, `--radius-100`, `--font-100` …) —
+- one dimensional scale (`--space-100`, `--radius-100`, `--font-100` …),
   derived from a base size and ratio
 - light/dark surface mapping
 
@@ -228,30 +231,28 @@ The output is a regular `.icss` string you can apply as-is or tweak further.
 
 ## Showcase app
 
-![ICSS showcase app](docs/demomovie/showcase-app.gif)
-
 ```bash
 cargo run --release -p icss-showcase
 ```
 
-A live gallery of every widget plus an interactive theme editor — change a
-base color and watch the whole system update. The "Save .icss" toggle in the
+A live gallery of every widget plus an interactive theme editor. Change a
+base colour and the whole system updates. The "Save .icss" toggle in the
 tab bar controls whether edits are written to disk.
 
 ## Documentation
 
-- [`docs/preview.html`](docs/preview.html) — visual mockup of the rendered widgets (open in a browser)
-- [`docs/ICSS.md`](docs/ICSS.md) — `.icss` syntax specification
-- [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md) — full class reference
-- [`docs/theme-creation.md`](docs/theme-creation.md) — design-system architecture
-- [`docs/SHOWCASE.md`](docs/SHOWCASE.md) — showcase app architecture
+- [`docs/preview.html`](docs/preview.html): visual mockup of the rendered widgets (open in a browser)
+- [`docs/ICSS.md`](docs/ICSS.md): `.icss` syntax specification
+- [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md): full class reference
+- [`docs/theme-creation.md`](docs/theme-creation.md): design-system architecture
+- [`docs/SHOWCASE.md`](docs/SHOWCASE.md): showcase app architecture
 
 ## Toolchain
 
 - iced 0.14 (wgpu backend)
 - Rust edition 2024, MSRV 1.85
-- Pure parser + style resolver — no browser engine, no JS runtime
+- Pure parser and style resolver. No browser engine or JS runtime.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
