@@ -720,6 +720,7 @@ fn boot() -> (State, Task<Msg>) {
             save_icss: true,
         },
         {
+            #[cfg_attr(not(target_os = "macos"), allow(unused_mut))]
             let mut tasks: Vec<Task<Msg>> = vec![open_task.discard()];
             #[cfg(target_os = "macos")]
             tasks.push(Task::perform(
@@ -1298,6 +1299,7 @@ fn update(state: &mut State, msg: Msg) -> Task<Msg> {
                             // continues moving the new window.
                             // Also schedule titlebar reshape for the new window.
                             maybe_regen!();
+                            #[cfg_attr(not(target_os = "macos"), allow(unused_mut))]
                             let mut tasks = vec![open_task.discard().chain(window::drag(new_id))];
                             #[cfg(target_os = "macos")]
                             {
@@ -3588,7 +3590,7 @@ fn icss_controls_page(state: &State) -> Element<'_, Msg> {
                                 Msg::SliderChanged,
                                 &["slider"],
                             )
-                            .step(0.01),
+                            .step(0.01_f32),
                         ),
                 ),
             &["section", "section-body"],
@@ -5668,7 +5670,7 @@ fn sliders_section(state: &State) -> Element<'_, Msg> {
                     .push(t.text(format!("Value: {pct}%"), &["label-small"]))
                     .push(
                         slider(0.0..=1.0, state.slider_value, Msg::SliderChanged)
-                            .step(0.01)
+                            .step(0.01_f32)
                             .style(t.slider(&["slider"])),
                     ),
             ),
