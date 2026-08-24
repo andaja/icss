@@ -798,10 +798,10 @@ impl<'a, Message: Clone> Widget<Message, Theme, Renderer> for TabBar<'a, Message
                     shell.publish((self.on_action)(TabBarAction::WindowDrag));
                 }
             }
-            Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)) => {
-                if self.drag.dragging.is_some() {
-                    shell.publish((self.on_action)(TabBarAction::DragEnd));
-                }
+            Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left))
+                if self.drag.dragging.is_some() =>
+            {
+                shell.publish((self.on_action)(TabBarAction::DragEnd));
             }
             _ => {}
         }
