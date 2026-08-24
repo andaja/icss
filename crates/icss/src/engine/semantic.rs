@@ -50,6 +50,57 @@ pub struct Palettes {
     pub warning_base_step: usize,
 }
 
+/// Offsets the four solid outlines sit at, in `step_size` units walked away
+/// from a family's surface base toward its text.
+const OUTLINE_OFFSETS: [i32; 4] = [7, 11, 15, 20];
+
+/// Outlines for one surface family (6 levels).
+///
+/// Two alpha levels taken at the family's own text end, which is what lets
+/// them survive any background, then four solid ones walked from the family's
+/// base step toward that text.
+#[derive(Debug, Clone)]
+pub struct Outlines {
+    pub subtle: String,
+    pub soft: String,
+    pub middle: String,
+    pub strong: String,
+    pub heavy: String,
+    pub solid: String,
+}
+
+impl Outlines {
+    /// Resolve against `palette`, walking away from `base` toward the text.
+    ///
+    /// Direction comes from the family's own text ladder rather than from
+    /// re-measuring the surface. A surface sitting mid-ramp can still be given
+    /// light text, and an outline that walked the other way would contradict
+    /// the text resolved to sit on top of it.
+    fn resolve(palette: &TonalPalette, base: usize, needs_light_text: bool) -> Self {
+        let dir: i32 = if needs_light_text { 1 } else { -1 };
+        let text_end: usize = if needs_light_text { 90 } else { 10 };
+        // The offsets were calibrated for the neutral page at step 5 or 95,
+        // where there are 95 steps of room between the base and the ramp end
+        // in the text direction. A chromatic base sits mid-ramp and has less,
+        // so the walk scales down with the room it actually has. At the
+        // default page step the scale is 1 and nothing moves.
+        let room = if dir > 0 { 100 - base } else { base } as f32;
+        let scale = room / 95.0;
+        let step = |offset: i32| -> usize {
+            let walk = (offset as f32 * 3.0 * scale).round() as i32;
+            (base as i32 + walk * dir).clamp(0, 100) as usize
+        };
+        Self {
+            subtle: palette.rgba(text_end, 0.08),
+            soft: palette.rgba(text_end, 0.15),
+            middle: palette.hex(step(OUTLINE_OFFSETS[0])),
+            strong: palette.hex(step(OUTLINE_OFFSETS[1])),
+            heavy: palette.hex(step(OUTLINE_OFFSETS[2])),
+            solid: palette.hex(step(OUTLINE_OFFSETS[3])),
+        }
+    }
+}
+
 /// Complete color scale for one surface type.
 #[derive(Debug, Clone)]
 pub struct SurfaceFamily {
@@ -67,6 +118,8 @@ pub struct SurfaceFamily {
     pub text_muted: String,
     pub text_faint: String,
     pub text_disabled: String,
+    // Outlines cut from this family's own ladder.
+    pub outlines: Outlines,
 }
 
 /// Step indices used to build a surface family (for display/debugging).
@@ -77,6 +130,16 @@ pub struct SurfaceSteps {
 }
 
 impl SurfaceFamily {
+    /// Re-cut this family's outlines.
+    ///
+    /// Called after a text override, because the outline direction follows the
+    /// text ladder that ends up on the family rather than the one `resolve`
+    /// first computed.
+    fn with_outlines(mut self, palette: &TonalPalette, base: usize, needs_light_text: bool) -> Self {
+        self.outlines = Outlines::resolve(palette, base, needs_light_text);
+        self
+    }
+
     /// Copy text hex colors from another family (keeps own surface steps).
     /// Used when two families share the same palette (e.g. tint borrows from surface).
     fn with_text_from(mut self, source: &SurfaceFamily) -> Self {
@@ -193,6 +256,7 @@ impl SurfaceFamily {
             text_muted: palette.hex(t_muted),
             text_faint: palette.hex(t_faint),
             text_disabled: palette.rgba(t_default, 0.50),
+            outlines: Outlines::resolve(palette, base, needs_light_text),
         }
     }
 }
@@ -278,27 +342,38 @@ impl SemanticColors {
             .map(usize::from)
             .unwrap_or_else(|| default_surface_lightness(mode) as usize);
 
-        // Compute capped base steps for colored surfaces.
-        // Upper cap at 50 — colored surfaces always use light text, so they must
-        // stay in the dark half of the scale.
+        // Base steps for colored surfaces.
+        //
         // Lower cap: enough contrast against the page background (srf).
         // At least srf+20 so buttons are distinguishable from the background.
-        let max_light_step = 50;
+        //
+        // The four chromatic families have no upper cap. They used to be
+        // clamped to 50 so light text always worked, which made `needs_light`
+        // below a foregone conclusion and landed a bright input darker than it
+        // was picked, identically in both modes. The text direction is
+        // resolved per family instead, so the surface can be the colour the
+        // reader actually chose.
+        //
+        // Signals keep the cap. Success, danger and warning are inverted by
+        // design and carry light text whatever the input, so they stay in the
+        // dark half of the scale.
+        let signal_max_step = 50;
         let min_dark_step = if mode == Mode::Dark {
             (srf + 20).min(40)
         } else {
             0
         };
-        let clamp_step = |step: usize| step.clamp(min_dark_step, max_light_step);
-        let pri = clamp_step(palettes.primary_base_step);
-        let sec = clamp_step(palettes.secondary_base_step);
-        let ter = clamp_step(palettes.tertiary_base_step);
-        let qua = clamp_step(palettes.quaternary_base_step);
+        let chromatic_step = |step: usize| step.clamp(min_dark_step, 100);
+        let signal_step = |step: usize| step.clamp(min_dark_step, signal_max_step);
+        let pri = chromatic_step(palettes.primary_base_step);
+        let sec = chromatic_step(palettes.secondary_base_step);
+        let ter = chromatic_step(palettes.tertiary_base_step);
+        let qua = chromatic_step(palettes.quaternary_base_step);
         // Signal colors shifted darker so text is always light (inverted).
         let sig_darken: usize = 10;
-        let suc = clamp_step(palettes.success_base_step.saturating_sub(sig_darken));
-        let dan = clamp_step(palettes.danger_base_step.saturating_sub(sig_darken));
-        let war = clamp_step(palettes.warning_base_step.saturating_sub(sig_darken));
+        let suc = signal_step(palettes.success_base_step.saturating_sub(sig_darken));
+        let dan = signal_step(palettes.danger_base_step.saturating_sub(sig_darken));
+        let war = signal_step(palettes.warning_base_step.saturating_sub(sig_darken));
 
         // Text contrast direction: step ≤ 55 → needs light text, step > 55 → dark text.
         // Based on the clamped tonal step, not the gamma-sensitive OKLCH
@@ -321,15 +396,13 @@ impl SemanticColors {
         let srf_step = |offset: i32| -> usize {
             (srf as i32 + offset * step_size * step_dir).clamp(0, 100) as usize
         };
-        // Text: opposite end of the scale from surface.
-        let txt_base: usize = if is_dark_surface { 90 } else { 10 };
         // Outlines: away from surface toward the text.
         let out_step =
             |offset: i32| -> usize { (srf as i32 + offset * 3 * step_dir).clamp(0, 100) as usize };
 
-        // Colored surface step direction: always darker (-1). Since colored
-        // surfaces are capped at step 50 and always use light text, elevating
-        // them darker keeps the whole family within the readable range.
+        // Colored surface step direction: always darker (-1). Elevation on a
+        // chromatic family reads as the colour deepening, in both modes, which
+        // is what keeps a primary button's hover state recognisably primary.
         let color_step_dir: i32 = -1;
 
         // Container base steps (tint versions of colored surfaces)
@@ -343,24 +416,24 @@ impl SemanticColors {
         let surface_s5 = n.hex(srf_step(5));
 
         // Tint surface families
+        let tint_base: usize = if is_dark_surface { 25 } else { 80 };
+        let dark_tint_base: usize = if is_dark_surface { 15 } else { 50 };
+        let black_base: usize = if is_dark_surface { 0 } else { 3 };
+
         let tint = if is_dark_surface {
-            SurfaceFamily::resolve(n, 25, step_size, 1, true, text_spread)
+            SurfaceFamily::resolve(n, tint_base, step_size, 1, true, text_spread)
         } else {
-            SurfaceFamily::resolve(n, 80, step_size, -1, false, text_spread)
+            SurfaceFamily::resolve(n, tint_base, step_size, -1, false, text_spread)
         };
 
         let dark_tint = if is_dark_surface {
-            SurfaceFamily::resolve(n, 15, step_size, 1, true, text_spread)
+            SurfaceFamily::resolve(n, dark_tint_base, step_size, 1, true, text_spread)
         } else {
-            SurfaceFamily::resolve(n, 50, step_size, -1, true, text_spread)
+            SurfaceFamily::resolve(n, dark_tint_base, step_size, -1, true, text_spread)
         };
 
         // Black surface (stays dark in both modes)
-        let black = if is_dark_surface {
-            SurfaceFamily::resolve(n, 0, step_size, 1, true, text_spread)
-        } else {
-            SurfaceFamily::resolve(n, 3, step_size, 1, true, text_spread)
-        };
+        let black = SurfaceFamily::resolve(n, black_base, step_size, 1, true, text_spread);
 
         // Primary family
         let primary =
@@ -496,8 +569,14 @@ impl SemanticColors {
         // "light_on_surface" = dark text (as if light theme), always needs_light_text=false
         let dark_ref = SurfaceFamily::resolve(n, 5, step_size, 1, true, text_spread);
 
+        // Each family's outlines are re-cut after its text override, because
+        // the outline direction follows the text ladder the family ends up
+        // with rather than the one `resolve` first computed.
+
         // 1. on-surface-tint → copy on-surface (same as neutral)
-        let tint = tint.with_text_from(&surface);
+        let tint = tint
+            .with_text_from(&surface)
+            .with_outlines(n, tint_base, is_dark_surface);
 
         // 2. on-surface-dark-tint → dark theme copies on-surface (light text),
         //    light theme uses dark-ref (dark text on dark-tint surface)
@@ -505,84 +584,65 @@ impl SemanticColors {
             dark_tint.with_text_from(&surface)
         } else {
             dark_tint.with_text_from(&dark_ref)
-        };
+        }
+        .with_outlines(n, dark_tint_base, true);
 
         // 3. on-surface-black → always dark theme on-surface (light text)
-        let black = black.with_text_from(&dark_ref);
+        let black = black
+            .with_text_from(&dark_ref)
+            .with_outlines(n, black_base, true);
 
-        // 4. on-surface-primary (and chromatic) → ALWAYS use dark-theme neutral
-        //    step indices (base=5, dir=+1, light text). Same in both themes.
-        //    Colors from chromatic palette for hue/saturation.
+        // 4. on-surface-primary (and chromatic) → colors from the chromatic
+        //    palette for hue/saturation, spread from whichever end that
+        //    family's own surface step calls for. The direction is the same in
+        //    both themes because the surface step it is taken from is.
+        //    Signals are inverted by design and stay on light text.
         let dark_base: usize = 5; // dark theme neutral surface base
-        let primary = primary.with_text_steps_from(p, dark_base, step_size, 1, true, text_spread);
-        let secondary =
-            secondary.with_text_steps_from(s, dark_base, step_size, 1, true, text_spread);
-        let tertiary =
-            tertiary.with_text_steps_from(te, dark_base, step_size, 1, true, text_spread);
-        let quaternary =
-            quaternary.with_text_steps_from(q, dark_base, step_size, 1, true, text_spread);
-        let success = success.with_text_steps_from(su, dark_base, step_size, 1, true, text_spread);
-        let danger = danger.with_text_steps_from(da, dark_base, step_size, 1, true, text_spread);
-        let warning = warning.with_text_steps_from(wa, dark_base, step_size, 1, true, text_spread);
+        let primary = primary
+            .with_text_steps_from(p, dark_base, step_size, 1, pri_light, text_spread)
+            .with_outlines(p, pri, pri_light);
+        let secondary = secondary
+            .with_text_steps_from(s, dark_base, step_size, 1, sec_light, text_spread)
+            .with_outlines(s, sec, sec_light);
+        let tertiary = tertiary
+            .with_text_steps_from(te, dark_base, step_size, 1, ter_light, text_spread)
+            .with_outlines(te, ter, ter_light);
+        let quaternary = quaternary
+            .with_text_steps_from(q, dark_base, step_size, 1, qua_light, text_spread)
+            .with_outlines(q, qua, qua_light);
+        let success = success
+            .with_text_steps_from(su, dark_base, step_size, 1, suc_light, text_spread)
+            .with_outlines(su, suc, suc_light);
+        let danger = danger
+            .with_text_steps_from(da, dark_base, step_size, 1, dan_light, text_spread)
+            .with_outlines(da, dan, dan_light);
+        let warning = warning
+            .with_text_steps_from(wa, dark_base, step_size, 1, war_light, text_spread)
+            .with_outlines(wa, war, war_light);
 
         // 5. on-surface-*-container → current theme's neutral on-surface step
         //    indices (srf), colors from chromatic palette.
-        let primary_container = primary_container.with_text_steps_from(
-            p,
-            srf,
-            step_size,
-            step_dir,
-            is_dark_surface,
-            text_spread,
-        );
-        let secondary_container = secondary_container.with_text_steps_from(
-            s,
-            srf,
-            step_size,
-            step_dir,
-            is_dark_surface,
-            text_spread,
-        );
-        let tertiary_container = tertiary_container.with_text_steps_from(
-            te,
-            srf,
-            step_size,
-            step_dir,
-            is_dark_surface,
-            text_spread,
-        );
-        let quaternary_container = quaternary_container.with_text_steps_from(
-            q,
-            srf,
-            step_size,
-            step_dir,
-            is_dark_surface,
-            text_spread,
-        );
-        let success_container = success_container.with_text_steps_from(
-            su,
-            srf,
-            step_size,
-            step_dir,
-            is_dark_surface,
-            text_spread,
-        );
-        let danger_container = danger_container.with_text_steps_from(
-            da,
-            srf,
-            step_size,
-            step_dir,
-            is_dark_surface,
-            text_spread,
-        );
-        let warning_container = warning_container.with_text_steps_from(
-            wa,
-            srf,
-            step_size,
-            step_dir,
-            is_dark_surface,
-            text_spread,
-        );
+        let primary_container = primary_container
+            .with_text_steps_from(p, srf, step_size, step_dir, is_dark_surface, text_spread)
+            .with_outlines(p, pri_cont_base, is_dark_surface);
+        let secondary_container = secondary_container
+            .with_text_steps_from(s, srf, step_size, step_dir, is_dark_surface, text_spread)
+            .with_outlines(s, sec_cont_base, is_dark_surface);
+        let tertiary_container = tertiary_container
+            .with_text_steps_from(te, srf, step_size, step_dir, is_dark_surface, text_spread)
+            .with_outlines(te, ter_cont_base, is_dark_surface);
+        let quaternary_container = quaternary_container
+            .with_text_steps_from(q, srf, step_size, step_dir, is_dark_surface, text_spread)
+            .with_outlines(q, qua_cont_base, is_dark_surface);
+        let success_container = success_container
+            .with_text_steps_from(su, srf, step_size, step_dir, is_dark_surface, text_spread)
+            .with_outlines(su, suc_cont_base, is_dark_surface);
+        let danger_container = danger_container
+            .with_text_steps_from(da, srf, step_size, step_dir, is_dark_surface, text_spread)
+            .with_outlines(da, dan_cont_base, is_dark_surface);
+        let warning_container = warning_container
+            .with_text_steps_from(wa, srf, step_size, step_dir, is_dark_surface, text_spread)
+            .with_outlines(wa, war_cont_base, is_dark_surface);
 
         // Accent on neutral — slightly adjusted for visibility
         let accent_offset: usize = 2;
@@ -634,18 +694,22 @@ impl SemanticColors {
             (n.rgba(5, 0.15), n.rgba(2, 0.25), n.rgba(5, 0.08))
         };
 
+        // The neutral page outlines are the neutral family's own set. These
+        // aliases stay because components reference them directly.
+        let no = surface.outlines.clone();
+
         Self {
             surface,
             surface_s5,
 
             outline_subtle: n.hex(out_step(1)),
             outline_soft: n.hex(out_step(3)),
-            outline_middle: n.hex(out_step(7)),
-            outline_strong: n.hex(out_step(11)),
-            outline_heavy: n.hex(out_step(15)),
-            outline_solid: n.hex(out_step(20)),
-            outline_subtle_alpha: n.rgba(txt_base, 0.08),
-            outline_soft_alpha: n.rgba(txt_base, 0.15),
+            outline_middle: no.middle,
+            outline_strong: no.strong,
+            outline_heavy: no.heavy,
+            outline_solid: no.solid,
+            outline_subtle_alpha: no.subtle,
+            outline_soft_alpha: no.soft,
 
             tint,
             dark_tint,
@@ -712,6 +776,102 @@ impl SemanticColors {
                 (
                     "surface-warning",
                     SurfaceFamily::steps(war, step_size, color_step_dir, war_light, text_spread),
+                ),
+                // Neutral variants and containers, so every family shown in the
+                // showcase carries its step numbers rather than a blank row.
+                (
+                    "surface-tint",
+                    SurfaceFamily::steps(
+                        tint_base,
+                        step_size,
+                        if is_dark_surface { 1 } else { -1 },
+                        is_dark_surface,
+                        text_spread,
+                    ),
+                ),
+                (
+                    "surface-dark-tint",
+                    SurfaceFamily::steps(
+                        dark_tint_base,
+                        step_size,
+                        if is_dark_surface { 1 } else { -1 },
+                        true,
+                        text_spread,
+                    ),
+                ),
+                (
+                    "surface-black",
+                    SurfaceFamily::steps(black_base, step_size, 1, true, text_spread),
+                ),
+                (
+                    "surface-primary-container",
+                    SurfaceFamily::steps(
+                        pri_cont_base,
+                        step_size,
+                        if is_dark_surface { 1 } else { -1 },
+                        is_dark_surface,
+                        text_spread,
+                    ),
+                ),
+                (
+                    "surface-secondary-container",
+                    SurfaceFamily::steps(
+                        sec_cont_base,
+                        step_size,
+                        if is_dark_surface { 1 } else { -1 },
+                        is_dark_surface,
+                        text_spread,
+                    ),
+                ),
+                (
+                    "surface-tertiary-container",
+                    SurfaceFamily::steps(
+                        ter_cont_base,
+                        step_size,
+                        if is_dark_surface { 1 } else { -1 },
+                        is_dark_surface,
+                        text_spread,
+                    ),
+                ),
+                (
+                    "surface-quaternary-container",
+                    SurfaceFamily::steps(
+                        qua_cont_base,
+                        step_size,
+                        if is_dark_surface { 1 } else { -1 },
+                        is_dark_surface,
+                        text_spread,
+                    ),
+                ),
+                (
+                    "surface-success-container",
+                    SurfaceFamily::steps(
+                        suc_cont_base,
+                        step_size,
+                        if is_dark_surface { 1 } else { -1 },
+                        is_dark_surface,
+                        text_spread,
+                    ),
+                ),
+                (
+                    "surface-danger-container",
+                    SurfaceFamily::steps(
+                        dan_cont_base,
+                        step_size,
+                        if is_dark_surface { 1 } else { -1 },
+                        is_dark_surface,
+                        text_spread,
+                    ),
+                ),
+                (
+                    "surface-warning-container",
+                    SurfaceFamily::steps(
+                        war_cont_base,
+                        step_size,
+                        if is_dark_surface { 1 } else { -1 },
+                        is_dark_surface,
+                        text_spread,
+                    ),
                 ),
             ],
         }

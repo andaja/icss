@@ -17,6 +17,26 @@ fn emit_surface_family(out: &mut String, prefix: &str, family: &SurfaceFamily) {
     css_var(out, &format!("on-{prefix}-muted"), &family.text_muted);
     css_var(out, &format!("on-{prefix}-faint"), &family.text_faint);
     css_var(out, &format!("on-{prefix}-disabled"), &family.text_disabled);
+    emit_family_outlines(out, prefix, family);
+}
+
+/// Emit outline custom properties for a surface family.
+///
+/// Named `--outline-{family}-{level}`, so a chromatic family's set reads as a
+/// sibling of the neutral page set. The neutral family is skipped here because
+/// `compose_icss` already emits its six levels under the bare `--outline-*`
+/// names that components reference.
+fn emit_family_outlines(out: &mut String, prefix: &str, family: &SurfaceFamily) {
+    let Some(name) = prefix.strip_prefix("surface-") else {
+        return;
+    };
+    let o = &family.outlines;
+    css_var(out, &format!("outline-{name}-subtle"), &o.subtle);
+    css_var(out, &format!("outline-{name}-soft"), &o.soft);
+    css_var(out, &format!("outline-{name}-middle"), &o.middle);
+    css_var(out, &format!("outline-{name}-strong"), &o.strong);
+    css_var(out, &format!("outline-{name}-heavy"), &o.heavy);
+    css_var(out, &format!("outline-{name}-solid"), &o.solid);
 }
 
 /// Emit swatch CSS classes for a surface family.
@@ -70,6 +90,17 @@ fn emit_family_swatches(out: &mut String, prefix: &str, r50: &str) {
         &format!(".sw-on-{prefix}-disabled"),
         &format!("var(--on-{prefix}-disabled)"),
     );
+    // Outline swatches, so the primitives page can show a family's own
+    // borders next to its surfaces and text.
+    if let Some(name) = prefix.strip_prefix("surface-") {
+        for level in ["subtle", "soft", "middle", "strong", "heavy", "solid"] {
+            swatch(
+                out,
+                &format!(".sw-outline-{name}-{level}"),
+                &format!("var(--outline-{name}-{level})"),
+            );
+        }
+    }
 }
 
 /// Generate the full `.icss` theme string.

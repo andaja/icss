@@ -3884,7 +3884,7 @@ fn primitives_page(state: &State) -> Element<'_, Msg> {
         .weighted(iced::font::Weight::Semibold);
 
     // Helper: labeled row of swatches (no step numbers)
-    let color_group = |label: &'static str,
+    let color_group = |label: &str,
                        items: Vec<(&'static str, &'static [&'static str])>|
      -> Element<'_, Msg> {
         let swatches: Vec<Element<'_, Msg>> = items
@@ -3892,7 +3892,7 @@ fn primitives_page(state: &State) -> Element<'_, Msg> {
             .map(|(name, cls)| prim_swatch(t, d, name, cls))
             .collect();
         column![
-            text(label).size(d.font_label_small),
+            text(label.to_owned()).size(d.font_label_small),
             Row::with_children(swatches).spacing(d.space_25),
         ]
         .spacing(2)
@@ -3929,28 +3929,26 @@ fn primitives_page(state: &State) -> Element<'_, Msg> {
             .map(|(_, s)| s)
     };
 
-    // Helper: builds a full family swatch group (surfaces + on-text) with step labels
+    // Helper: builds a full family swatch group (surfaces + on-text + the
+    // family's own outlines) with step labels on the first two rows.
     let family_swatches_fn = |prefix: &str,
                               surface_items: Vec<(&'static str, &'static [&'static str])>,
-                              text_items: Vec<(&'static str, &'static [&'static str])>|
+                              text_items: Vec<(&'static str, &'static [&'static str])>,
+                              outline_items: Vec<(&'static str, &'static [&'static str])>|
      -> Element<'_, Msg> {
         let surface_label = format!("surface-{prefix}");
         let text_label = format!("on-surface-{prefix}");
-        if let Some(steps) = find_steps(&surface_label) {
-            column![
-                color_group_steps(&surface_label, surface_items, &steps.surface),
-                color_group_steps(&text_label, text_items, &steps.text),
-            ]
-            .spacing(d.space_50)
-            .into()
-        } else {
-            column![
-                color_group_steps(&surface_label, surface_items, &[]),
-                color_group_steps(&text_label, text_items, &[]),
-            ]
-            .spacing(d.space_50)
-            .into()
-        }
+        let outline_label = format!("outline-{prefix}");
+        let steps = find_steps(&surface_label);
+        let surface_steps: &[usize] = steps.map(|s| &s.surface[..]).unwrap_or(&[]);
+        let text_steps: &[usize] = steps.map(|s| &s.text[..]).unwrap_or(&[]);
+        column![
+            color_group_steps(&surface_label, surface_items, surface_steps),
+            color_group_steps(&text_label, text_items, text_steps),
+            color_group(&outline_label, outline_items),
+        ]
+        .spacing(d.space_50)
+        .into()
     };
 
     macro_rules! family_swatches {
@@ -3974,6 +3972,14 @@ fn primitives_page(state: &State) -> Element<'_, Msg> {
                         &[concat!("sw-on-surface-", $prefix, "-disabled")],
                     ),
                     ("faint", &[concat!("sw-on-surface-", $prefix, "-faint")]),
+                ],
+                vec![
+                    ("subtle", &[concat!("sw-outline-", $prefix, "-subtle")][..]),
+                    ("soft", &[concat!("sw-outline-", $prefix, "-soft")]),
+                    ("middle", &[concat!("sw-outline-", $prefix, "-middle")]),
+                    ("strong", &[concat!("sw-outline-", $prefix, "-strong")]),
+                    ("heavy", &[concat!("sw-outline-", $prefix, "-heavy")]),
+                    ("solid", &[concat!("sw-outline-", $prefix, "-solid")]),
                 ],
             )
         };
